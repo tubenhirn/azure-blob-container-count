@@ -15,6 +15,7 @@ func main() {
 	ctx := context.Background()
 
 	sa := flag.String("s", "", "name of the azure storageaccount")
+	pageSize := flag.Int("p", 100, "page size")
 
 	flag.Parse()
 
@@ -28,7 +29,7 @@ func main() {
 	credential, _ := azidentity.NewDefaultAzureCredential(nil)
 	client, _ := azblob.NewClient(url, credential, nil)
 
-	containerCount, err := getContainerCount(ctx, client)
+	containerCount, err := getContainerCount(ctx, client, int32(*pageSize))
 	if err != nil {
 		panic(err)
 	}
@@ -37,20 +38,20 @@ func main() {
 }
 
 // return the number of cointainers in a storage account
-func getContainerCount(_ctx context.Context, client *azblob.Client) (int64, error) {
+func getContainerCount(_ctx context.Context, client *azblob.Client, pageSize int32) (int64, error) {
 	ctx, cancel := context.WithTimeout(_ctx, time.Duration(time.Millisecond*5000))
 	defer cancel()
 
 	var count int64
 
-	maxResults := int32(100)
+	// get 100 containers per page
 	opts := &azblob.ListContainersOptions{
 		Include:    service.ListContainersInclude{
 			Metadata: false,
 			Deleted:  false,
 			System:   false,
 		},
-		MaxResults: &maxResults,
+		MaxResults: &pageSize,
 	}
 	pager := client.NewListContainersPager(opts)
 
