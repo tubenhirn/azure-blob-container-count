@@ -16,6 +16,7 @@ func main() {
 
 	sa := flag.String("s", "", "name of the azure storageaccount")
 	pageSize := flag.Int("p", 100, "page size")
+	timeOut := flag.Int("t", 5000, "timeout in ms")
 
 	flag.Parse()
 
@@ -29,7 +30,7 @@ func main() {
 	credential, _ := azidentity.NewDefaultAzureCredential(nil)
 	client, _ := azblob.NewClient(url, credential, nil)
 
-	containerCount, err := getContainerCount(ctx, client, int32(*pageSize))
+	containerCount, err := getContainerCount(ctx, client, int32(*pageSize), time.Duration(*timeOut))
 	if err != nil {
 		panic(err)
 	}
@@ -38,8 +39,8 @@ func main() {
 }
 
 // return the number of cointainers in a storage account
-func getContainerCount(_ctx context.Context, client *azblob.Client, pageSize int32) (int64, error) {
-	ctx, cancel := context.WithTimeout(_ctx, time.Duration(time.Millisecond*5000))
+func getContainerCount(_ctx context.Context, client *azblob.Client, pageSize int32, timeout time.Duration) (int64, error) {
+	ctx, cancel := context.WithTimeout(_ctx, time.Duration(time.Millisecond*timeout))
 	defer cancel()
 
 	var count int64
